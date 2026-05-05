@@ -1,0 +1,36 @@
+.env
+.env.*
+!.env.example
+
+# Clay auth and browser state
+*cookie*
+*cookies*
+*session*
+*token*
+*bearer*
+.clay-auth*
+chrome-profile/
+browser-state/
+
+# Raw or sensitive run artifacts
+runs/
+artifacts/
+output/
+screenshots/
+*.har
+*manifest*.json
+*snapshot*.json
+*readback*.json
+*source*.json
+*target*.json
+
+# Python
+__pycache__/
+*.pyc
+.venv/
+venv/
+
+# OS/editor
+.DS_Store
+.idea/
+.vscode/
