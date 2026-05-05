@@ -15,11 +15,14 @@ This repository intentionally does not include cookies, bearer tokens, API keys,
 
 ## Current Contents
 
+- [AGENTS.md](AGENTS.md): orientation and rules for AI agents working in the repo.
+- [docs/repo-map.md](docs/repo-map.md): quick map of the repo and good first contribution areas.
 - [docs/autoresearch-clone-loop.md](docs/autoresearch-clone-loop.md): the scratch-table clone loop and safety model.
 - [docs/frontend-api-patterns.md](docs/frontend-api-patterns.md): Clay frontend endpoint and payload rules found during benchmark work.
 - [docs/browser-automation-patterns.md](docs/browser-automation-patterns.md): browser-use patterns for Clay drawers, formulas, and UI verification.
 - [docs/recent-table-patterns.md](docs/recent-table-patterns.md): reusable patterns from recent Growth Engine X Clay tables.
 - [docs/benchmark-2026-05-03.md](docs/benchmark-2026-05-03.md): summary of the benchmark run and current blocker.
+- [docs/roadmap.md](docs/roadmap.md): prioritized path from knowledge base to usable builder.
 - [scripts/redact_clay_manifest.py](scripts/redact_clay_manifest.py): recursively redacts credential-shaped values from Clay JSON artifacts.
 - [scripts/score_clay_parity.py](scripts/score_clay_parity.py): compares source and target table manifests with source-to-target field ID remapping.
 
@@ -30,6 +33,15 @@ Use Python 3.11+.
 ```bash
 python3 scripts/redact_clay_manifest.py source-manifest.raw.json source-manifest.redacted.json
 python3 scripts/score_clay_parity.py source-manifest.redacted.json target-manifest.redacted.json --field-map field-map.json
+```
+
+Try the scorer with fake fixtures:
+
+```bash
+python3 scripts/score_clay_parity.py \
+  examples/fixtures/source-table.example.json \
+  examples/fixtures/target-table.example.json \
+  --field-map examples/fixtures/field-map.example.json
 ```
 
 `field-map.json` should map source field IDs to target field IDs:

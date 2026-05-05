@@ -24,6 +24,10 @@ screenshots/
 *source*.json
 *target*.json
 
+# Public fake fixtures are allowed.
+!examples/fixtures/
+!examples/fixtures/*.json
+
 # Python
 __pycache__/
 *.pyc

@@ -1,0 +1,61 @@
+{
+  "id": "t_source",
+  "fields": [
+    {
+      "id": "f_company",
+      "name": "Company",
+      "type": "text"
+    },
+    {
+      "id": "f_domain",
+      "name": "Domain",
+      "type": "formula",
+      "typeSettings": {
+        "formulaText": "{{f_company}}?.toLowerCase()?.replaceAll(' ', '') + '.com'"
+      },
+      "inputFieldIds": ["f_company"]
+    },
+    {
+      "id": "f_http",
+      "name": "Lookup Company",
+      "type": "action",
+      "typeSettings": {
+        "actionKey": "http-api-v2",
+        "actionPackageId": "4299091f-3cd3-4d68-b198-0143575f471d",
+        "actionVersion": 1,
+        "inputsBinding": [
+          {
+            "name": "method",
+            "formulaText": "\"GET\""
+          },
+          {
+            "name": "endpoint",
+            "formulaText": "\"https://example.invalid/company?domain=\" + encodeURIComponent({{f_domain}})"
+          }
+        ]
+      },
+      "inputFieldIds": ["f_domain"],
+      "conditionalRunFormulaText": "!!{{f_domain}}"
+    }
+  ],
+  "views": [
+    {
+      "id": "gv_source",
+      "name": "Default View",
+      "fields": {
+        "f_company": {
+          "isVisible": true,
+          "order": 0
+        },
+        "f_domain": {
+          "isVisible": true,
+          "order": 1
+        },
+        "f_http": {
+          "isVisible": false,
+          "order": 2
+        }
+      }
+    }
+  ]
+}

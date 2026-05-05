@@ -1,0 +1,37 @@
+name: Clay endpoint pattern
+description: Document or improve a Clay frontend API endpoint pattern.
+title: "Endpoint: "
+labels: ["endpoint", "research"]
+body:
+  - type: input
+    id: endpoint
+    attributes:
+      label: Method and path template
+      placeholder: "POST /v3/tables/:tableId/fields"
+    validations:
+      required: true
+  - type: textarea
+    id: purpose
+    attributes:
+      label: Purpose
+      description: What workflow does this endpoint support?
+    validations:
+      required: true
+  - type: textarea
+    id: payload
+    attributes:
+      label: Minimum payload shape
+      description: Use fake IDs and redacted values only.
+      render: json
+  - type: textarea
+    id: readback
+    attributes:
+      label: Readback verification
+      description: What GET/readback proves the write persisted correctly?
+    validations:
+      required: true
+  - type: textarea
+    id: risks
+    attributes:
+      label: Known risks or normalization behavior
+      description: Include billing, destructive, permission, or server-normalization risks.

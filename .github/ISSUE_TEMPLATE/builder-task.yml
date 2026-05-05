@@ -1,0 +1,37 @@
+name: Builder task
+description: Implement a small builder, scorer, redactor, or fixture improvement.
+title: "Builder: "
+labels: ["builder"]
+body:
+  - type: textarea
+    id: goal
+    attributes:
+      label: Goal
+      description: What should become easier after this change?
+    validations:
+      required: true
+  - type: textarea
+    id: scope
+    attributes:
+      label: Scope
+      description: Files or behavior likely involved.
+    validations:
+      required: true
+  - type: textarea
+    id: verification
+    attributes:
+      label: Verification
+      description: What fake fixture or command should prove it works?
+    validations:
+      required: true
+  - type: checkboxes
+    id: safety
+    attributes:
+      label: Safety checks
+      options:
+        - label: Uses fake IDs or redacted fixtures only.
+          required: true
+        - label: Does not require live Clay credentials for tests.
+          required: true
+        - label: Does not run external Clay actions by default.
+          required: true
