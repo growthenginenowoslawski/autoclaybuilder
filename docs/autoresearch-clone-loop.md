@@ -1,19 +1,26 @@
-# Clay Autoresearch Clone Loop
+# The Calibration Loop (Clone & Verify)
 
-This loop is for reverse-engineering a Clay table and recreating it in scratch tables until config parity is perfect or a real blocker is proven.
+This loop is how AutoClayBuilder **proves a build is correct**. You recreate a
+known table in a scratch table and score config parity until it is perfect or a
+real blocker is proven. It is the test harness behind
+[docs/build-a-table.md](build-a-table.md) — clone a table you already trust to
+calibrate the build payloads, then build new tables with that confidence.
+
+It is also the verification step (step 6) of every build: read the result back
+fresh and score it against the spec.
 
 ## Safety Rules
 
-- Do not mutate the source table.
+- Do not mutate the source/reference table.
 - Use scratch workbooks and scratch tables for every attempt.
 - Copy only the first 10 source rows unless the operator explicitly raises the limit.
-- Save columns without running first where possible.
+- Save columns without running them first where possible.
 - Run external or integration columns only on the scratch sample rows when validation requires it.
 - Redact cookies, bearer tokens, API keys, passwords, webhook URLs, auth headers, and credential-like values before writing artifacts.
 
 ## Source Manifest
 
-Extract the source through the logged-in Clay frontend API:
+Extract the reference table through the logged-in Clay frontend API:
 
 ```text
 GET /v3/tables/:tableId?extraDataViewId=:viewId&includeExtraData=true
@@ -34,10 +41,10 @@ The redacted manifest should preserve:
 
 Run attempts as separate folders with clear status:
 
-- `api-first`: create and configure as much as possible through frontend APIs; use browser automation for missing endpoints and verification.
+- `api-first`: configure as much as possible through frontend APIs; browser automation only for missing endpoints and verification.
 - `browser-first`: recreate through Clay UI workflows, then verify by fetching the API manifest.
 - `duplicate-then-patch`: use Clay's duplicate path when allowed, then patch and compare mismatches.
-- `from-scratch-api-browser`: use an API-created scratch base, then browser automation for columns or settings the API cannot reproduce.
+- `from-scratch-api-browser`: API-created scratch base, then browser automation for columns or settings the API cannot reproduce.
 
 ## Parity Scoring
 
@@ -48,7 +55,9 @@ Score against fresh source and target readbacks from the same endpoint. Compare:
 - first 10 seed rows
 - UI evidence for edit drawers, formulas, column menus, run controls, and representative cell inspection
 
-Runtime output equality is separate evidence. A config-perfect scratch table can still need runtime logging if external APIs are async, permissioned, or rate limited.
+Runtime output equality is separate evidence. A config-perfect scratch table can
+still need runtime logging if external APIs are async, permissioned, or rate
+limited.
 
 ## Run Log Format
 

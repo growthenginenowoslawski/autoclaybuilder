@@ -1,31 +1,40 @@
 # Roadmap
 
-This is the current build plan for turning AutoClayBuilder from a knowledge base into a practical builder.
+The path from knowledge base to a builder that produces correct Clay tables on
+demand. The clone/parity tooling is the **test suite** that gates every phase —
+not a separate deliverable.
 
-## Phase 1: Make Artifacts Testable
+## Phase 1: Plan-Mode Builder (the product)
 
-- Add a fake Clay manifest fixture set with fields, views, field groups, records, action fields, formulas, and extracted fields.
-- Add unit tests for recursive redaction.
-- Add unit tests for source-to-target field ID remapping.
-- Extend parity scoring to report nested diffs instead of only field-level mismatch.
-- Add view parity scoring: view names, order, field order, hidden state, filters, sorts, and grouping.
+- `CLAUDE.md` + `plans/TEMPLATE.md` make any agent that opens the repo refuse to
+  build without an approved plan. (Done — keep tightening.)
+- `docs/build-a-table.md` as the canonical forward build guide. (Done.)
+- Add a `plans/EXAMPLES/` set: real (redacted) approved plans for the common
+  table archetypes, so new builds start from a proven plan, not a blank one.
+- Add a `docs/learnings/` index so plan-mode can cite the relevant scar fast.
 
-## Phase 2: Normalize Manifests
+## Phase 2: Calibration Test Suite
 
-- Create a small Python package under `autoclaybuilder/`.
+- Fake Clay manifest fixtures: fields, views, field groups, records, action
+  fields, formulas, extracted fields.
+- Unit tests for recursive redaction.
+- Unit tests for source-to-target field ID remapping.
+- Parity scoring reports nested diffs, not only field-level mismatch.
+- View parity scoring: names, order, field order, hidden state, filters, sorts, grouping.
+
+## Phase 3: Builder Library + CLIs
+
+- Python package under `autoclaybuilder/`.
 - Move redaction and parity code into importable modules.
-- Add a normalized manifest schema with:
-  - fields
-  - views
-  - field groups
-  - table settings
-  - seed records
-  - endpoint notes
-- Add CLI commands for `redact`, `score`, and `summarize`.
+- Normalized manifest schema (fields, views, field groups, table settings, seed
+  records, endpoint notes).
+- CLI commands: `redact`, `score`, `summarize`, and `plan` (scaffold a build
+  plan from a spec or a reference manifest).
 
-## Phase 3: Payload Builders
+## Phase 4: Payload Builders
 
-Add payload builders for the common Clay column types:
+Payload builders for the common Clay column types, each with a save-without-run
+path and a readback verification check:
 
 - text/manual fields
 - formulas
@@ -33,34 +42,22 @@ Add payload builders for the common Clay column types:
 - `http-api-v2`
 - `use-ai`
 - `chat-gpt-schema-mapper`
-- Smartlead add/lookup/forward patterns
+- Smartlead add/lookup/forward
 - Slack notification actions
-- Google Sheets append/update actions
-- HubSpot lookup/create/update actions
+- Google Sheets append/update
+- HubSpot lookup/create/update
 - lookup/write to other Clay tables
 
-Every builder should include a save-without-run path and a readback verification check.
+## Phase 5: Browser Verification Recipes
 
-## Phase 4: Browser Verification Recipes
+- Deterministic browser-use recipes.
+- Optional harness scripts: open a table with a selected Chrome profile, check
+  auth state, capture safe drawer screenshots, validate formula editor save.
+- Browser automation stays optional and clearly separated from API-only logic.
 
-- Document browser-use recipes as deterministic steps.
-- Add optional harness scripts for:
-  - opening a table with a selected Chrome profile
-  - checking auth state
-  - capturing safe drawer screenshots
-  - validating formula editor save behavior
-- Keep browser automation optional and clearly separated from API-only logic.
+## Phase 6: End-To-End Guarded Builder
 
-## Phase 5: End-To-End Scratch Clone
-
-Build a guarded CLI that can:
-
-1. read a redacted or live source manifest
-2. create a scratch table
-3. recreate safe fields/views/rows
-4. save without running action columns
-5. fetch target readback
-6. score parity
-7. write a public-safe run summary
-
-Live mutation support should require explicit flags and should default to scratch-only behavior.
+A guarded CLI that, from an approved plan: creates a scratch table, recreates
+fields/views/rows, saves without running action columns, fetches the target
+readback, scores parity, and writes a public-safe run summary. Live mutation
+requires explicit flags and defaults to scratch-only.

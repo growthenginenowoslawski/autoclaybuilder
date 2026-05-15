@@ -1,32 +1,66 @@
 # AutoClayBuilder
 
-AutoClayBuilder is a public-safe collection of patterns, scripts, and benchmark notes for rebuilding Clay tables with Clay frontend APIs plus browser automation.
+**AutoClayBuilder builds Clay tables — correctly, verifiably, the first time.**
 
-The goal is practical table cloning and table generation:
+Describe the table you want (or point at one to learn from). The workflow here
+produces an exact, approved build plan, builds it into a safe scratch table, and
+proves the result matches the spec field-for-field.
 
-- extract a source table through Clay's logged-in frontend API
-- redact credentials and destination-specific IDs before saving artifacts
-- create scratch workbooks and tables without mutating the source
-- rebuild fields, views, formulas, extracted fields, action columns, and row seeds
-- use browser automation only for UI-only checks and missing API coverage
-- score source-to-target config parity from fresh readbacks
+Reverse-engineering an existing table is part of this — but it is the
+**calibration** step, not the point. You clone known-good tables to prove the
+build payloads are exactly right, then you build new tables with that confidence.
 
-This repository intentionally does not include cookies, bearer tokens, API keys, raw table manifests, row data dumps, screenshots with sensitive UI, webhook URLs, Slack IDs, Google Sheet IDs, or Smartlead campaign IDs.
+This repository intentionally contains no cookies, bearer tokens, API keys, raw
+table manifests, row dumps, sensitive screenshots, webhook URLs, Slack IDs,
+Google Sheet IDs, or Smartlead campaign IDs.
 
-## Current Contents
+## Start here
 
-- [AGENTS.md](AGENTS.md): orientation and rules for AI agents working in the repo.
-- [docs/repo-map.md](docs/repo-map.md): quick map of the repo and good first contribution areas.
-- [docs/autoresearch-clone-loop.md](docs/autoresearch-clone-loop.md): the scratch-table clone loop and safety model.
-- [docs/frontend-api-patterns.md](docs/frontend-api-patterns.md): Clay frontend endpoint and payload rules found during benchmark work.
-- [docs/browser-automation-patterns.md](docs/browser-automation-patterns.md): browser-use patterns for Clay drawers, formulas, and UI verification.
-- [docs/recent-table-patterns.md](docs/recent-table-patterns.md): reusable patterns from recent Growth Engine X Clay tables.
-- [docs/benchmark-2026-05-03.md](docs/benchmark-2026-05-03.md): summary of the benchmark run and current blocker.
-- [docs/roadmap.md](docs/roadmap.md): prioritized path from knowledge base to usable builder.
-- [scripts/redact_clay_manifest.py](scripts/redact_clay_manifest.py): recursively redacts credential-shaped values from Clay JSON artifacts.
-- [scripts/score_clay_parity.py](scripts/score_clay_parity.py): compares source and target table manifests with source-to-target field ID remapping.
+If you opened this repo in an AI coding agent (Claude Code, etc.), **`CLAUDE.md`
+loads automatically and puts the agent into plan mode**: it will not build
+anything in Clay until it has written, and you have approved, an exact build
+plan. No command to run — the repo self-activates.
 
-## Quick Start
+Building by hand? Read, in order:
+
+1. [CLAUDE.md](CLAUDE.md) — what this repo does and the plan-before-build rule
+2. [docs/build-a-table.md](docs/build-a-table.md) — the forward "how to build a table" guide
+3. [plans/TEMPLATE.md](plans/TEMPLATE.md) — the build-plan template every build starts from
+4. [docs/autoresearch-clone-loop.md](docs/autoresearch-clone-loop.md) — the calibration harness (how a build is proven correct)
+
+## How it works
+
+1. **Lock the spec** — interview until the goal, source of truth, every column
+   and type, and the non-goals are unambiguous.
+2. **Read the accumulated knowledge** — patterns and prior `docs/learnings/`
+   scars constrain what is actually buildable.
+3. **Write the plan** — fill `plans/TEMPLATE.md`; mark every endpoint verified
+   vs inferred.
+4. **Get explicit approval** — no silent builds, no "I'll start and iterate."
+5. **Build into a scratch table** — never mutate the source; save action
+   columns without running them.
+6. **Calibrate / verify** — fresh API readback, score config parity, loop until
+   perfect or an evidence-backed blocker.
+7. **Write the learning** — redacted learnings file so the next build inherits
+   the scar, not the wound.
+
+## Repo contents
+
+- [CLAUDE.md](CLAUDE.md): auto-loaded plan-mode note for AI agents.
+- [AGENTS.md](AGENTS.md): full agent rules — plan-before-build, learnings log, safety.
+- [plans/TEMPLATE.md](plans/TEMPLATE.md): the build-plan template.
+- [docs/build-a-table.md](docs/build-a-table.md): forward build guide.
+- [docs/repo-map.md](docs/repo-map.md): quick map of the repo.
+- [docs/autoresearch-clone-loop.md](docs/autoresearch-clone-loop.md): the calibration harness used to prove a build is correct.
+- [docs/frontend-api-patterns.md](docs/frontend-api-patterns.md): Clay frontend endpoint and payload rules.
+- [docs/browser-automation-patterns.md](docs/browser-automation-patterns.md): browser-use patterns for Clay drawers, formulas, UI verification.
+- [docs/recent-table-patterns.md](docs/recent-table-patterns.md): reusable patterns from recent Clay tables.
+- [docs/benchmark-2026-05-03.md](docs/benchmark-2026-05-03.md): benchmark run and current blocker.
+- [docs/roadmap.md](docs/roadmap.md): path from knowledge base to a usable builder.
+- [scripts/redact_clay_manifest.py](scripts/redact_clay_manifest.py): recursive credential redaction.
+- [scripts/score_clay_parity.py](scripts/score_clay_parity.py): source-to-target parity scorer.
+
+## Quick start (the calibration tools)
 
 Use Python 3.11+.
 
@@ -44,7 +78,7 @@ python3 scripts/score_clay_parity.py \
   --field-map examples/fixtures/field-map.example.json
 ```
 
-`field-map.json` should map source field IDs to target field IDs:
+`field-map.json` maps source field IDs to target field IDs:
 
 ```json
 {
@@ -52,27 +86,14 @@ python3 scripts/score_clay_parity.py \
 }
 ```
 
-## Clone Loop
+## Public repo safety
 
-1. Extract the source table with:
-
-   ```text
-   GET /v3/tables/:tableId?extraDataViewId=:viewId&includeExtraData=true
-   ```
-
-2. Redact the manifest before writing it to disk.
-3. Create a scratch workbook/table. Do not mutate the source table.
-4. Recreate fields, field groups, views, and the first 10 seed rows.
-5. Fetch the target table through the same API.
-6. Score parity from the source and target readbacks.
-7. Use browser automation for formula validation, edit drawers, menus, run controls, and representative cell inspection.
-
-The first milestone is config parity. Runtime outputs are useful evidence, but they should be logged separately from config parity unless the task explicitly requires output equality.
-
-## Public Repo Safety
-
-Keep live artifacts out of git unless they are deliberately redacted and reviewed. The `.gitignore` blocks common Clay run outputs, auth files, manifests, screenshots, and browser state by default.
+Keep live artifacts out of git unless they are deliberately redacted and
+reviewed. The `.gitignore` blocks common Clay run outputs, auth files,
+manifests, screenshots, and browser state by default.
 
 ## Contributing
 
-External contributors can open pull requests from forks. Only `growthenginenowoslawski` currently has write/admin access to this repository, so only the owner can merge.
+External contributors can open pull requests from forks. Only
+`growthenginenowoslawski` currently has write/admin access, so only the owner
+can merge.
