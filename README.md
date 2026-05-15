@@ -1,6 +1,15 @@
 # AutoClayBuilder
 
+[![Live demo](https://img.shields.io/badge/live%20demo-how%20it%20works-ff6a3d?style=flat-square)](https://growthenginenowoslawski.github.io/autoclaybuilder/)
+[![Builds Clay tables](https://img.shields.io/badge/builds-Clay%20tables-4338ca?style=flat-square)](docs/build-a-table.md)
+[![Plan-mode gated](https://img.shields.io/badge/plan--mode-gated-0f9d58?style=flat-square)](CLAUDE.md)
+[![Benchmark parity](https://img.shields.io/badge/calibration%20parity-98.45%25-0f9d58?style=flat-square)](docs/benchmark-2026-05-03.md)
+[![CI](https://img.shields.io/github/actions/workflow/status/growthenginenowoslawski/autoclaybuilder/ci.yml?style=flat-square&label=CI)](https://github.com/growthenginenowoslawski/autoclaybuilder/actions/workflows/ci.yml)
+![Python 3.11+](https://img.shields.io/badge/python-3.11%2B-3776ab?style=flat-square)
+
 **AutoClayBuilder builds Clay tables — correctly, verifiably, the first time.**
+
+> **[▶ See how it works (live visualization)](https://growthenginenowoslawski.github.io/autoclaybuilder/)** — the plan → build → prove workflow, in plain English with a technical-detail toggle.
 
 Describe the table you want (or point at one to learn from). The workflow here
 produces an exact, approved build plan, builds it into a safe scratch table, and
