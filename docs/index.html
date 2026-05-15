@@ -1,0 +1,379 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AutoClayBuilder — How It Works</title>
+<style>
+  :root{
+    --ink:#15161b;--muted:#6b6f7a;--line:#e7e6e2;--bg:#faf8f4;--card:#ffffff;
+    --accent:#ff6a3d;--accent-soft:#fff0ea;--indigo:#4338ca;--indigo-soft:#eef0fe;
+    --green:#0f9d58;--green-soft:#e8f5ec;
+    --mono:'SF Mono',ui-monospace,'Cascadia Mono','JetBrains Mono',Menlo,Consolas,monospace;
+    --sans:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Inter,Helvetica,Arial,sans-serif;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html{scroll-behavior:smooth}
+  body{font-family:var(--sans);color:var(--ink);background:var(--bg);line-height:1.55;-webkit-font-smoothing:antialiased}
+  .wrap{max-width:1080px;margin:0 auto;padding:0 28px}
+
+  header{padding:64px 0 40px;border-bottom:1px solid var(--line);
+    background:radial-gradient(900px 360px at 80% -10%,var(--accent-soft),transparent 60%),radial-gradient(700px 300px at 0% 0%,var(--indigo-soft),transparent 55%)}
+  .eyebrow{font-family:var(--mono);font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:var(--accent);font-weight:600;margin-bottom:14px}
+  h1{font-size:46px;line-height:1.08;letter-spacing:-.02em;font-weight:800;margin-bottom:18px}
+  h1 .dim{color:var(--muted);font-weight:700}
+  .lede{font-size:19px;color:var(--muted);max-width:700px}
+  .lede b{color:var(--ink);font-weight:600}
+
+  .controls{display:flex;gap:10px;align-items:center;margin-top:30px;flex-wrap:wrap}
+  .toggle{display:inline-flex;align-items:center;gap:9px;background:var(--card);border:1px solid var(--line);padding:9px 16px;border-radius:999px;cursor:pointer;font-size:14px;font-weight:600;color:var(--ink);transition:.18s;user-select:none}
+  .toggle:hover{border-color:var(--accent);color:var(--accent)}
+  .toggle .dot{width:9px;height:9px;border-radius:50%;background:var(--muted);transition:.18s}
+  body.tech .toggle .dot{background:var(--accent)}
+  body.tech .toggle{border-color:var(--accent);color:var(--accent)}
+  .hint{font-size:13px;color:var(--muted)}
+
+  section{padding:56px 0;border-bottom:1px solid var(--line)}
+  .kicker{font-family:var(--mono);font-size:12px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);font-weight:600;margin-bottom:10px}
+  h2{font-size:30px;letter-spacing:-.015em;font-weight:800;margin-bottom:10px}
+  .sub{font-size:17px;color:var(--muted);max-width:680px;margin-bottom:34px}
+
+  .pgrid{display:grid;grid-template-columns:1fr 1fr;gap:18px}
+  .pcard{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:24px}
+  .pcard h3{font-size:16px;margin-bottom:8px;display:flex;align-items:center;gap:9px}
+  .pcard p{font-size:15px;color:var(--muted)}
+  .tag{font-family:var(--mono);font-size:11px;font-weight:700;padding:3px 9px;border-radius:6px}
+  .tag.bad{background:#fdeceb;color:#c0392b}
+  .tag.good{background:var(--green-soft);color:var(--green)}
+
+  /* plan-mode highlight */
+  .planmode{background:linear-gradient(135deg,#15161b,#26212f);color:#fff;border-radius:20px;padding:40px;display:grid;grid-template-columns:1.1fr 1fr;gap:36px;align-items:center}
+  .planmode h2{color:#fff;margin-bottom:14px}
+  .planmode p{color:#d6d8e0;font-size:15.5px;margin-bottom:12px}
+  .planmode p b{color:#fff}
+  .planmode .file{font-family:var(--mono);font-size:13px;background:#2c2738;color:#ffb59e;padding:3px 8px;border-radius:6px}
+  .term{background:#0d0e12;border:1px solid #2c2738;border-radius:14px;padding:20px;font-family:var(--mono);font-size:12.5px;line-height:1.7;color:#cdd0d8}
+  .term .c{color:#6b6f7a}
+  .term .g{color:#67d98b}
+  .term .o{color:#ff8a63}
+  .term .w{color:#fff}
+
+  .loopwrap{position:relative;padding-left:54px}
+  .spine{position:absolute;left:19px;top:18px;bottom:90px;width:2px;background:var(--line)}
+  .step{position:relative;background:var(--card);border:1px solid var(--line);border-radius:16px;padding:22px 24px;margin-bottom:18px;transition:.2s;opacity:0;transform:translateY(14px)}
+  .step.in{opacity:1;transform:none}
+  .step:hover{border-color:var(--accent);box-shadow:0 8px 28px -16px rgba(255,106,61,.5)}
+  .step.gate{border-color:var(--accent);background:var(--accent-soft)}
+  .num{position:absolute;left:-54px;top:20px;width:40px;height:40px;border-radius:50%;background:var(--ink);color:#fff;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:16px;font-family:var(--mono);box-shadow:0 0 0 6px var(--bg)}
+  .step.gate .num{background:var(--accent)}
+  .step h3{font-size:18px;font-weight:700;margin-bottom:6px;display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+  .step .plain{font-size:15.5px;color:var(--muted)}
+  .chip{font-family:var(--mono);font-size:11px;font-weight:700;padding:3px 9px;border-radius:6px;background:var(--indigo-soft);color:var(--indigo);white-space:nowrap}
+  .chip.api{background:var(--accent-soft);color:var(--accent)}
+  .chip.safe{background:var(--green-soft);color:var(--green)}
+  .chip.stop{background:#fdeceb;color:#c0392b}
+  .tech{margin-top:14px;border-top:1px dashed var(--line);padding-top:14px;font-size:13.5px;color:var(--ink);display:none}
+  body.tech .tech{display:block;animation:fade .3s ease}
+  @keyframes fade{from{opacity:0}to{opacity:1}}
+  .tech code{font-family:var(--mono);font-size:12.5px;background:#f3f2ee;padding:2px 6px;border-radius:5px;color:var(--ink)}
+  .tech ul{margin:8px 0 0 18px}
+  .tech li{margin-bottom:5px;color:var(--muted)}
+  .tech li b{color:var(--ink);font-weight:600}
+
+  .loopback{position:relative;margin:6px 0 0 -54px;display:flex;align-items:center;gap:14px;background:linear-gradient(90deg,var(--green-soft),transparent);border:1px dashed var(--green);border-radius:14px;padding:16px 22px}
+  .loopback .arc{width:42px;height:42px;border-radius:50%;border:2px solid var(--green);color:var(--green);display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0;animation:spin 6s linear infinite}
+  @keyframes spin{to{transform:rotate(360deg)}}
+  .loopback b{color:var(--green)}
+  .loopback span{font-size:14.5px;color:var(--muted)}
+
+  .paths{display:grid;grid-template-columns:repeat(4,1fr);gap:14px}
+  .path{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:18px;border-top:3px solid var(--indigo)}
+  .path:nth-child(2){border-top-color:var(--accent)}
+  .path:nth-child(3){border-top-color:var(--green)}
+  .path:nth-child(4){border-top-color:#a855f7}
+  .path h4{font-family:var(--mono);font-size:13px;margin-bottom:8px}
+  .path p{font-size:13px;color:var(--muted)}
+
+  .iorow{display:grid;grid-template-columns:1fr auto 1fr;gap:24px;align-items:stretch}
+  .iocol{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:24px}
+  .iocol h3{font-size:14px;font-family:var(--mono);text-transform:uppercase;letter-spacing:.08em;color:var(--muted);margin-bottom:16px}
+  .iocol ul{list-style:none}
+  .iocol li{font-size:14.5px;padding:8px 0;border-bottom:1px solid var(--line);color:var(--ink)}
+  .iocol li:last-child{border:0}
+  .iocol li small{display:block;color:var(--muted);font-size:12.5px;font-family:var(--mono);margin-top:2px}
+  .ioarrow{display:flex;align-items:center;font-size:30px;color:var(--accent)}
+  .engine{text-align:center;background:var(--ink);color:#fff;border-radius:16px;padding:24px 18px;display:flex;flex-direction:column;justify-content:center;gap:6px}
+  .engine .e1{font-weight:800;font-size:16px}
+  .engine .e2{font-size:12.5px;color:#b9bcc6;font-family:var(--mono)}
+
+  .pills{display:flex;flex-wrap:wrap;gap:10px}
+  .pill{background:var(--card);border:1px solid var(--line);border-radius:999px;padding:9px 16px;font-size:13.5px;font-weight:600;display:flex;align-items:center;gap:8px}
+  .pill .pd{width:8px;height:8px;border-radius:50%}
+  .pill small{color:var(--muted);font-weight:500}
+
+  .result{background:linear-gradient(135deg,#15161b,#26212f);color:#fff;border-radius:20px;padding:38px;display:grid;grid-template-columns:auto 1fr;gap:34px;align-items:center}
+  .bignum{font-size:64px;font-weight:800;letter-spacing:-.03em;line-height:1}
+  .bignum small{display:block;font-size:14px;color:#b9bcc6;font-weight:600;margin-top:8px;font-family:var(--mono)}
+  .result p{color:#d6d8e0;font-size:15px;margin-bottom:10px}
+  .result p b{color:#fff}
+  .result .lesson{border-left:3px solid var(--accent);padding-left:16px;font-size:14.5px;color:#eceef4;margin-top:14px}
+
+  footer{padding:42px 0 70px;text-align:center;color:var(--muted);font-size:14px}
+  footer a{color:var(--accent);text-decoration:none;font-weight:600}
+  footer a:hover{text-decoration:underline}
+
+  @media (max-width:860px){
+    h1{font-size:34px}
+    .pgrid,.paths{grid-template-columns:1fr}
+    .planmode{grid-template-columns:1fr;gap:20px}
+    .iorow{grid-template-columns:1fr;gap:14px}
+    .ioarrow{transform:rotate(90deg);justify-content:center}
+    .result{grid-template-columns:1fr;text-align:center;gap:18px}
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="wrap">
+    <div class="eyebrow">github.com/growthenginenowoslawski/autoclaybuilder</div>
+    <h1>AutoClayBuilder<br><span class="dim">Builds Clay tables — correctly, verifiably, the first time.</span></h1>
+    <p class="lede">Clay tables are intricate stacks of formulas, AI columns, and API integrations, and a single wrong setting breaks a run silently. AutoClayBuilder makes building one <b>safe and provable</b>: describe the table you want, it forces an exact build plan you approve <em>before</em> anything is created, builds it into a throwaway scratch table, then <b>mathematically proves the result matches the spec</b>. Reverse-engineering an existing table is part of it — but only as the calibration step that proves the build payloads are right.</p>
+    <div class="controls">
+      <div class="toggle" id="toggle"><span class="dot"></span><span id="toggleLabel">Show the technical detail</span></div>
+      <span class="hint">Plain-English by default. Flip this for the API calls, ID remapping, and parity scoring.</span>
+    </div>
+  </div>
+</header>
+
+<section>
+  <div class="wrap">
+    <div class="kicker">Why this exists</div>
+    <h2>The problem it solves</h2>
+    <p class="sub">Building a Clay table by hand is slow and silently error-prone. Cloning one to "learn how it works" still leaves you guessing whether your next build is right. AutoClayBuilder turns building into a planned, verified process.</p>
+    <div class="pgrid">
+      <div class="pcard">
+        <h3><span class="tag bad">By hand</span> Build and hope</h3>
+        <p>Click 100+ columns into existence from memory. One wrong field type or missing input binding and the run produces wrong output — with no error to tell you.</p>
+      </div>
+      <div class="pcard">
+        <h3><span class="tag good">AutoClayBuilder</span> Plan → build → prove</h3>
+        <p>An approved plan first, a scratch build second, then a field-by-field parity score against the spec. You ship a number, not a guess.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section>
+  <div class="wrap">
+    <div class="kicker">The headline feature</div>
+    <h2 style="margin-bottom:6px">Plan mode, the moment you open the repo</h2>
+    <p class="sub">No setup, no command to remember. The repo self-activates into a planning gate.</p>
+    <div class="planmode">
+      <div>
+        <h2>It refuses to build blind.</h2>
+        <p>The repo ships a <span class="file">CLAUDE.md</span> at its root. Any AI coding agent (Claude Code, etc.) loads it automatically the instant the repo is opened.</p>
+        <p>That note <b>hard-gates building behind an approved plan</b>: the agent must lock the spec, read every past scar in <span class="file">docs/learnings/</span>, fill in <span class="file">plans/TEMPLATE.md</span>, and get your explicit "go" — <b>before a single Clay API call fires.</b></p>
+        <p>So "how should this table be built?" is answered in writing, by the repo itself, every time — not improvised mid-build.</p>
+      </div>
+      <div class="term">
+<span class="c"># you clone the repo and open it</span>
+$ <span class="w">git clone …/autoclaybuilder && claude</span>
+
+<span class="g">✓ CLAUDE.md loaded — plan mode active</span>
+
+<span class="o">you ›</span> build me a table that finds
+      a company's funding news
+
+<span class="g">claude ›</span> Before I build: I need the
+  spec locked. What's the source of
+  truth, and what columns + types?
+  I'll write a plan to <span class="w">plans/</span> and
+  you approve it before I touch Clay.
+
+<span class="c"># no silent build. ever.</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section>
+  <div class="wrap">
+    <div class="kicker">The core workflow</div>
+    <h2>From "I want a table" to a proven build — 7 steps</h2>
+    <p class="sub">Steps 1–4 happen before anything is created. Step 4 is a hard approval gate. The build itself only ever touches a throwaway scratch table, with action columns saved <em>without running</em> so no real API calls fire by accident.</p>
+
+    <div class="loopwrap">
+      <div class="spine"></div>
+
+      <div class="step"><div class="num">1</div>
+        <h3>Lock the spec</h3>
+        <p class="plain">Interview until the goal, the source of truth, every column and its type, and the non-goals are unambiguous. You can't build what you can't state exactly.</p>
+        <div class="tech">If a reference Clay table exists, treat it as the spec and read its <b>real config</b> via the API (the calibration loop) instead of guessing from the UI. Output: a filled <code>plans/TEMPLATE.md</code> draft.</div>
+      </div>
+
+      <div class="step"><div class="num">2</div>
+        <h3>Read the accumulated knowledge <span class="chip">don't skip</span></h3>
+        <p class="plain">Pull in the reusable column patterns and — critically — every past failure already paid for, so this build doesn't repeat one.</p>
+        <div class="tech">
+          <ul>
+            <li><code>docs/recent-table-patterns.md</code> — reusable column/integration patterns</li>
+            <li><code>docs/frontend-api-patterns.md</code> — which endpoints are <b>verified</b> vs <b>inferred</b></li>
+            <li><code>docs/learnings/</code> — the scars. If a learning flagged a column type as unstable, the plan must call it out with a link.</li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="step"><div class="num">3</div>
+        <h3>Write the plan <span class="chip">plans/TEMPLATE.md</span></h3>
+        <p class="plain">Fill a 10-section build plan: goal, exact target shape column-by-column, field mapping, every endpoint marked verified or inferred, risks from past scars, non-goals, verification plan, and the ordered runbook.</p>
+        <div class="tech">A reader of the finished plan should be able to <b>predict every API call</b> the build will make. "Inferred" endpoints are higher risk and are flagged explicitly in the approval ask.</div>
+      </div>
+
+      <div class="step gate"><div class="num">4</div>
+        <h3>Approval gate <span class="chip stop">no silent builds</span></h3>
+        <p class="plain">Present the plan, ask for an unambiguous yes. Silence, enthusiasm, or "looks good" on one section is not approval. Pushback → edit plan → re-ask. Nothing is created in Clay until this clears.</p>
+        <div class="tech">Once approved, the plan is the contract for the build; deviations get logged in the learnings file with the reason.</div>
+      </div>
+
+      <div class="step"><div class="num">5</div>
+        <h3>Build into a scratch table <span class="chip safe">source untouched</span></h3>
+        <p class="plain">Recreate every column, formula, AI prompt, integration, field group, view order, and seed row in a brand-new disposable table — saved <em>without running it</em>.</p>
+        <div class="tech">
+          <ul>
+            <li><code>POST /v3/workbooks</code> → <code>POST /v3/tables</code> (<code>template:"no_views"</code>)</li>
+            <li>Action columns created as full actions up front — Clay won't promote a text field later</li>
+            <li>Clay generates its own field IDs → build a source→target ID map and remap IDs everywhere (formulas, <code>inputsBinding</code>, <code>inputFieldIds</code>, extracted fields, views, cross-table refs)</li>
+            <li>Seed first 10 rows, scalar values. Verify <code>cellCount = 0</code> so no placeholder API calls fire.</li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="step"><div class="num">6</div>
+        <h3>Calibrate &amp; verify <span class="chip">math, not vibes</span></h3>
+        <p class="plain">Re-fetch the scratch table fresh — a "200 OK" write isn't proof Clay kept what you sent; it silently normalizes. Score config parity against the spec field-by-field.</p>
+        <div class="tech"><code>scripts/score_clay_parity.py</code>: strips volatile keys, remaps target IDs back to source IDs, deep-compares each field. Outputs <code>score</code> (matched/total), status (<code>perfect_config_parity</code> / <code>config_mismatch</code>), and typed mismatches. <b>The fresh readback is the only authority.</b></div>
+      </div>
+
+      <div class="step"><div class="num">7</div>
+        <h3>Write the learning <span class="chip">compound</span></h3>
+        <p class="plain">End every build with a redacted learnings file: what worked, what didn't, the mistakes, what the next builder should do differently. Then ask before opening a PR.</p>
+        <div class="tech"><code>docs/learnings/YYYY-MM-DD-&lt;slug&gt;.md</code>. The next build inherits the scar, not the wound. Never auto-push.</div>
+      </div>
+
+      <div class="loopback">
+        <div class="arc">↻</div>
+        <span><b>Steps 5–6 loop until a stop condition.</b> Either <b>perfect config parity</b> (100% score + 10-row seed check + browser evidence for UI-only settings) — or an <b>evidence-backed blocker</b>: the exact failing step, fresh readback, redacted request/response, and proof no remaining path bypasses it.</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section>
+  <div class="wrap">
+    <div class="kicker">Calibration strategy</div>
+    <h2>Four ways to prove a build, run in parallel</h2>
+    <p class="sub">When calibrating against a known table, the same target is rebuilt four different ways at once. Whichever reaches perfect parity first wins; the rest are marked "abandoned by better path." This is how the builder earns confidence in its payloads.</p>
+    <div class="paths">
+      <div class="path"><h4>api-first</h4><p>Configure entirely via the frontend API. Browser only for gaps and final verification.</p></div>
+      <div class="path"><h4>browser-first</h4><p>Recreate through the Clay UI like a human would, then verify with an API snapshot.</p></div>
+      <div class="path"><h4>duplicate-then-patch</h4><p>Use Clay's native duplicate endpoint as a head start, then patch the mismatches.</p></div>
+      <div class="path"><h4>from-scratch-api-browser</h4><p>API-built scratch base, with the browser handling un-reproducible columns.</p></div>
+    </div>
+  </div>
+</section>
+
+<section>
+  <div class="wrap">
+    <div class="kicker">Data flow</div>
+    <h2>What goes in, what comes out</h2>
+    <p class="sub">Everything in the middle stays local and gitignored. Only redacted, public-safe artifacts ever leave the machine.</p>
+    <div class="iorow">
+      <div class="iocol"><h3>Inputs</h3><ul>
+        <li>The table you want <small>spec, field list, or a reference URL</small></li>
+        <li>Authenticated Clay session <small>real Chrome cookies, never committed</small></li>
+        <li>Optional build outline <small>bullets, screenshot</small></li>
+      </ul></div>
+      <div class="ioarrow">→</div>
+      <div class="engine"><div class="e1">Plan → Build → Prove</div><div class="e2">spec · plan · approve<br>scratch build · score</div></div>
+    </div>
+    <div class="iorow" style="margin-top:14px">
+      <div class="iocol"><h3>Local only (gitignored)</h3><ul>
+        <li>Approved build plan</li>
+        <li>Scratch workbook + target readback</li>
+        <li>Source→target field-ID map</li>
+        <li>Browser-state screenshots</li>
+      </ul></div>
+      <div class="ioarrow">→</div>
+      <div class="iocol"><h3>Outputs</h3><ul>
+        <li>A working scratch table matching the spec</li>
+        <li>Parity score report <small>JSON</small></li>
+        <li>Append-only run log <small>TSV: parity, status, notes</small></li>
+        <li>Learnings doc <small>"the scars" future builds inherit</small></li>
+      </ul></div>
+    </div>
+  </div>
+</section>
+
+<section>
+  <div class="wrap">
+    <div class="kicker">Integrations</div>
+    <h2>What it talks to</h2>
+    <p class="sub">Two systems are called directly. The rest are Clay column <em>types</em> the builder must recreate faithfully — not services this tool calls itself.</p>
+    <div class="pills">
+      <div class="pill"><span class="pd" style="background:var(--accent)"></span>Clay frontend API <small>· primary, undocumented</small></div>
+      <div class="pill"><span class="pd" style="background:var(--indigo)"></span>browser-use + Chrome <small>· UI verification</small></div>
+      <div class="pill"><span class="pd" style="background:var(--green)"></span>GitHub Actions <small>· minimal CI</small></div>
+    </div>
+    <p class="sub" style="margin:22px 0 12px;font-size:14px">Column types it must build exactly:</p>
+    <div class="pills">
+      <div class="pill">OpenAI / Claygent (use-ai)</div>
+      <div class="pill">HTTP API v2</div>
+      <div class="pill">Smartlead</div>
+      <div class="pill">Slack</div>
+      <div class="pill">Google Sheets</div>
+      <div class="pill">HubSpot</div>
+      <div class="pill">Mixrank</div>
+      <div class="pill">Cross-table lookups</div>
+      <div class="pill">Subroutines &amp; normalizers</div>
+    </div>
+  </div>
+</section>
+
+<section>
+  <div class="wrap">
+    <div class="kicker">Proven by calibration</div>
+    <h2>The benchmark — and the one wall it found</h2>
+    <p class="sub">Calibration run on 2026-05-03 against a real 103-field table.</p>
+    <div class="result">
+      <div><div class="bignum">98.45%<small>config parity</small></div></div>
+      <div>
+        <p>The best non-duplicate rebuild recreated <b>103 fields, 2 views, 7 field groups, and 10 seed rows</b> faithfully — proving the build payloads are correct.</p>
+        <p>The only mismatch: 4 Claygent / <code style="background:#2c2738;color:#fff;padding:2px 6px;border-radius:5px;font-family:var(--mono);font-size:12px">use-ai</code> fields where a hidden rate-limit setting was silently normalized from <b>200 → workspace default 5</b> despite Clay returning 200 OK. No UI control to override — a documented, evidence-backed blocker, not a build error.</p>
+        <div class="lesson"><b>Durable lesson:</b> a fresh API readback is always authoritative. Config parity is a stricter, more honest bar than "the sample rows ran fine" — which is exactly why the builder is gated on it.</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <div class="wrap">
+    <p>AutoClayBuilder &nbsp;·&nbsp; <a href="https://github.com/growthenginenowoslawski/autoclaybuilder" target="_blank">github.com/growthenginenowoslawski/autoclaybuilder</a></p>
+    <p style="margin-top:8px;font-size:12.5px">Public-safe by design — no credentials, real IDs, manifests, or customer data are ever committed.</p>
+  </div>
+</footer>
+
+<script>
+  var t=document.getElementById('toggle'),lbl=document.getElementById('toggleLabel');
+  t.addEventListener('click',function(){
+    document.body.classList.toggle('tech');
+    lbl.textContent=document.body.classList.contains('tech')?'Hide the technical detail':'Show the technical detail';
+  });
+  var io=new IntersectionObserver(function(es){
+    es.forEach(function(e){if(e.isIntersecting){e.target.classList.add('in');io.unobserve(e.target);}});
+  },{threshold:.18});
+  document.querySelectorAll('.step').forEach(function(s){io.observe(s)});
+</script>
+
+</body>
+</html>
